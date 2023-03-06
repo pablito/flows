@@ -1,0 +1,67 @@
+name: 'Sample of deployment with manual approvals'
+
+on:
+  push:
+    branches:
+      - "main"
+
+env:
+  DOTNET_VERSION: '3.1.404'
+
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+
+      # Checkout the repo
+      - uses: actions/checkout@master
+
+      # Run build
+      - name: build and publish
+        run: |
+          echo "build an artifact"
+          touch "./artifact.txt"
+
+      # Publish artifact
+      - name: Publish artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: published-app
+          path: './artifact.txt'
+
+  deploy-dev:
+    runs-on: 'ubuntu-latest'
+    environment: 'dev'
+    needs: build-and-publish
+    steps:
+
+      # Download published artifact
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: published-app
+          path: './artifact.txt'
+
+      # Deploy
+      - name: Deploy to cloud
+        run: |
+          echo "deploying..."
+
+  deploy-prod:
+    runs-on: 'ubuntu-latest'
+    environment: 'prod'
+    needs: [build-and-publish, deploy-dev]
+    steps:
+
+      # Download published artifact
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: published-app
+          path: './artifact.txt'
+
+      # Deploy to web app
+      - name: Deploy to cloud
+        run: |
+          echo "deploying..."
